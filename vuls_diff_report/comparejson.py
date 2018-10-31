@@ -259,7 +259,4 @@ if __name__ == '__main__':
 
 	else:
 		print "Use all arguments. use -h, -help for information."
-	#except:
-	# 	pass
-
-	# 	print "Use correct arguments!! Incase Either one of : \n arguments not valid"
+	
