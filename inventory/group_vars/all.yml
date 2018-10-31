@@ -1,0 +1,4 @@
+---
+# file: group_vars/all
+ansible_user: ubuntu  
+ansible_password: ubuntu
