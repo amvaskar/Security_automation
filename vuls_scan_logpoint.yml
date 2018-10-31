@@ -1,0 +1,81 @@
+#ansible-playbook vuls_scan_logpoint.yml -i inventory
+---
+- hosts: all
+  gather_facts: no
+  tasks:
+   
+   - name: fetching modified data
+     shell: 
+        cmd: /home/ubuntu/go/bin/go-cve-dictionary fetchnvd -latest 
+
+     args:
+       executable: /bin/bash
+
+
+   - name: fetch-ubuntu data dictionary
+     shell:
+        cmd: /home/ubuntu/go/bin/goval-dictionary fetch-ubuntu 16 
+
+     
+   - name: Scan logpoint Vulnabilities
+     block: 
+       - shell:
+           cmd: timeout 10 /home/ubuntu/go/bin/vuls scan -results-dir=/home/ubuntu/results/logpoint logpoint
+
+     rescue:
+       - debug:
+           msg: 'There is Error on executing!!'
+       - shell:
+           cmd: /home/ubuntu/go/bin/vuls scan -results-dir=/home/ubuntu/results/logpoint logpoint
+
+     always:
+       - debug:
+           msg: "This will run anyway!!! lets see"
+
+
+   - name: fetch report
+     shell:
+        cmd: /home/ubuntu/go/bin/vuls report -results-dir=/home/ubuntu/results/logpoint -format-one-line-text
+
+
+   - name: finding Recent file
+     shell: "ls -td -- */ | head -1 | cut -d'/' -f1"
+     args:
+       chdir: "/home/ubuntu/results/logpoint"
+     register: recent_file
+
+   - debug:
+       var: recent_file.stdout
+
+
+   - name: fetching Recent file to execute 
+     fetch:
+      src: /home/ubuntu/results/logpoint/{{ recent_file.stdout }}/logpoint.json
+      dest: /home/ubuntu/Recent_file/
+      mode: 0744
+      flat: yes
+
+   
+   - name:  finding Previous file
+     shell: "ls -td -- */ | head -3 | cut -d'/' -f1 | tail -1"
+     args:
+       chdir: "/home/ubuntu/results/logpoint"
+     register: Previous_file
+
+   - debug:
+       var: Previous_file.stdout
+
+
+   - name: fetching Previous file to execute 
+     fetch:
+      src: /home/ubuntu/results/logpoint/{{ Previous_file.stdout }}/logpoint.json
+      dest: /home/ubuntu/Previous_file/
+      mode: 0744
+      flat: yes 
+
+
+
+
+
+
+  
