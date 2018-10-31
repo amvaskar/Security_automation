@@ -1,0 +1,52 @@
+#ansible-playbook vuls_scan.yml -i inventory
+---
+- hosts: all
+  tasks:
+   - name: fetching modified data
+     shell: 
+        cmd: <directory/to/home/username>/go/bin/go-cve-dictionary fetchnvd -latest 
+
+     args:
+       executable: /bin/bash
+
+   - name: fetch-ubuntu data dictionary
+     shell:
+        cmd: <directory/to/home/username>/go/bin/goval-dictionary fetch-ubuntu 16 
+     
+
+   - name: Scan logpoint Vulnabilities
+     block: 
+       - shell:
+           cmd: timeout 10 <directory/to/home/username>/go/bin/vuls scan --debug -vvv logpoint
+
+     rescue:
+       - debug:
+           msg: 'There is Error on executing!!'
+       - shell:
+           cmd: <directory/to/home/username>/go/bin/vuls scan --debug -vvv logpoint
+
+     always:
+       - debug:
+           msg: "This will run anyway!!! lets see"
+
+
+
+   - name: fetch report
+     shell:
+        cmd: <directory/to/home/username>/go/bin/vuls report -format-short-text
+
+
+   - name: copy files to execute
+     copy:
+      src: ./vuls_diff_report
+      dest: <directory/to/home/username>
+      owner: lpsupport
+      group: lpsupport
+      mode: u+rwx,g+rwx,o+rwx
+      #recurse: yes
+    
+
+   - name: run bash script for vuls diff report
+     command: bash <directory/to/home/username>/vuls_diff_report/runner.sh
+
+
